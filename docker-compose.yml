@@ -1,0 +1,74 @@
+version: '3.8'
+services:
+  auth-service:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      - POSTGRES_URL=postgresql://user:password@postgres:5432/auth_db
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: gunicorn -w 1 -b 0.0.0.0:8000 app:app --timeout 120
+  analysis-service:
+    build: ./analysis
+    ports:
+      - "8002:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_started
+    command: gunicorn -w 1 -b 0.0.0.0:8000 app:app --timeout 600
+  storage-service:
+    build: ./storage
+    ports:
+      - "8003:8000"
+    environment:
+      - POSTGRES_URL=postgresql://user:password@postgres:5432/storage_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: gunicorn -w 1 -b 0.0.0.0:8000 app:app --timeout 120
+  api-gateway:
+    build: ./gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth-service
+      - analysis-service
+      - storage-service
+    command: gunicorn -w 1 -b 0.0.0.0:8000 app:app --timeout 120
+  streamlit:
+    build: ./streamlit
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api-gateway
+    command: streamlit run streamlit_app.py --server.port 8501
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/create_databases.sh:/docker-entrypoint-initdb.d/10-create_databases.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:6
+    volumes:
+      - redis_data:/data
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,28 +1,65 @@
+# .gitignore for Sentiment Analysis Microservices
+
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
+*$py.class
+*.pyc
 *.pyd
 .Python
+env/
+venv/
+env.bak/
+venv.bak/
+
+# Virtualenv
 *.egg-info/
-*.egg
 dist/
 build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+*.egg
 
-# Virtual environment
-venv/
-env/
+# Docker
+Dockerfile.local
+docker-compose.override.yml
+*.tar
 
-# Environment variables
-.env
-
-# Logs
+# Logs and databases
 *.log
+*.sql
+!.gitignore
+!db/init.sql
+postgres_data/
+redis_data/
 
-# IDEs
-.vscode/
-.idea/
-
-# System files
+# OS generated files
 .DS_Store
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE and Editor files
+.idea/
+*.sublime-workspace
+*.sublime-project
+.vscode/
+*.swp
+
+# Environment variables (removed .env as per request, but keep this as a precaution)
+.env
+!.env.example
+
+# OneDrive specific (since you're using OneDrive)
+~*.tmp
+
+# Streamlit
+streamlit/*.cache
+
+# Temporary files
+*.tmp
+*.bak
